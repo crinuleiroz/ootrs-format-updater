@@ -1,4 +1,4 @@
-# Ocarina of Time Music File Updater
+# Ocarina of Time Randomizer Music File Updater
 This is a python script that copies and updates packed music files (`.ootrs`) to the updated packed format Majora's Mask Randomizer uses that uses a YAML META (`.meta`) file to store metadata.
 
 > [!NOTE]
