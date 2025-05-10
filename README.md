@@ -27,7 +27,7 @@ Converted files are placed in an output folder named `converted`, which is locat
 `../path/to/input_folder/converted/`
 
 > [!IMPORTANT]
-> When using a folder for input, the directoy structure will be preserved. All supported files are converted and placed in their corresponding locations within the `converted` folder.
+> When using a folder for input, the directory structure will be preserved. All supported files are converted and placed in their corresponding locations within the `converted` folder.
 >
 > So don't worry — you can safely convert an organized folder without losing its original structure!
 
