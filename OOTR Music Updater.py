@@ -196,7 +196,7 @@ def write_metadata(folder: str, base_name: str, cosmetic_name: str, meta_bank, s
   if zsounds:
     yaml_dict["metadata"]["audio samples"] = zsounds
 
-  with open(f"{folder}/{base_name}.meta", "w", encoding="utf-8") as f:
+  with open(f"{folder}/{base_name}.metadata", "w", encoding="utf-8") as f:
     yaml.dump(yaml_dict, f, sort_keys=False, allow_unicode=True)
 
 def convert_archive(file, base_folder, rel_path) -> None:
@@ -223,6 +223,10 @@ def convert_archive(file, base_folder, rel_path) -> None:
       archive.unpack(filename, filepath)
     except:
       raise Exception(f'ERROR: Error processing ootrs file: {filename}.ootrs! Cannot unpack archive!')
+
+    # The file is already converted, so move on
+    if any(f.endswith('.metadata') for f in os.listdir(tempfolder)):
+      return
 
     meta_name : str = os.path.splitext(os.path.basename(archive.meta_file))[0]
 
