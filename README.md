@@ -17,14 +17,19 @@ To use this script, follow the steps below:
 
 That's it — your files are now copied and converted!
 
+> [!TIP]
+> If you would rather see exactly which directories and files are being processed, you can change the `USE_SPINNER` value at the top of the script:
+> - True: Prints just the spinner to the terminal
+> - False: Prints every directory and file being processed to the terminal
+
 ## 📂 Output Folder Location
 Converted files are placed in an output folder named `converted`, which is located in the following location depending on the input type:
 
 #### 📁 Folder:
-`../path/to/input_folder/converted/`
+`../path/to/parent_folder/input_folder_converted/`
 
 > [!IMPORTANT]
-> When using a folder for input, the directory structure will be preserved. All supported files are converted and placed in their corresponding locations within the `converted` folder.
+> When using a folder for input, the directory structure will be preserved. All supported files are converted and placed in their corresponding locations within the `input_folder_converted` folder.
 >
 > So don't worry — you can safely convert an organized folder without losing its original structure!
 
