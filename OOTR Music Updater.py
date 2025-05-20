@@ -319,6 +319,7 @@ def process_with_spinner(input_file: str, base_folder: str, conversion_folder: s
     spinner_thread.join()
     print(f"{RED}Error processing {input_file}:{RESET}")
     print(f"{YELLOW}{str(e)}{RESET}")
+    print()
     log_error(f"Error processing {input_file}", exc_info=True)
     spinner_thread = start_spinner("Processing file...")
 
