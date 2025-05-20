@@ -19,8 +19,8 @@ That's it — your files are now copied and converted!
 
 > [!TIP]
 > If you would rather see exactly which directories and files are being processed, you can change the `USE_SPINNER` value at the top of the script:
-> - True: Prints just the spinner to the terminal
-> - False: Prints every directory and file being processed to the terminal
+> - `True` — Prints just the spinner to the terminal
+> - `False` — Prints every directory and file being processed to the terminal
 
 ## 📂 Output Folder Location
 Converted files are placed in an output folder named `converted`, which is located in the following location depending on the input type:
