@@ -80,7 +80,7 @@ def start_spinner(message: str):
 # HANDLE ERROR LOGGING
 import logging
 
-logger = logging.getLogger('mmr_music_updater')
+logger = logging.getLogger('ootr_music_updater')
 logger.setLevel(logging.ERROR)
 logger.propagate = False
 _log_handler = None
@@ -88,7 +88,7 @@ _log_handler = None
 def log_error(message: str, exc_info = True):
   global _log_handler
   if _log_handler is None:
-    _log_handler = logging.FileHandler('mmr-music-updater_errors.log', mode='a', encoding='utf-8')
+    _log_handler = logging.FileHandler('ootr-music-updater_errors.log', mode='a', encoding='utf-8')
     _log_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
     logger.addHandler(_log_handler)
 
@@ -242,7 +242,9 @@ def process_meta_file(meta_filepath: str) -> tuple[str, str | int, str, list[str
     elif len(lines) >= 3:
       song_type = lines[2].lower()
 
-    if len(lines) >= 4:
+    if len(lines) < 4:
+      music_groups = []
+    elif len(lines) >= 4:
       music_groups = [category for category in lines[3].split(',')]
 
     zsounds = {}
