@@ -44,6 +44,15 @@ SPINNER_FRAMES : Final[list[str]] = [
   "⠀⢘", "⠀⡘", "⠀⠨", "⠀⢐", "⠀⡐", "⠀⠠", "⠀⢀", "⠀⡀",
 ]
 
+# If the music groups line is empty, assign defaults based on the song type
+DEFAULT_BGM_CATEGORIES: Final[list[str]] = [
+  "Fields", "Town", "Dungeon", "Indoors", "Fun", "Fight", "CharacterTheme",
+]
+
+DEFAULT_FANFARE_CATEGORIES: Final[list[str]] = [
+  "EventFanfare", "SongFanfare"
+]
+
 # HANDLE THREADING
 import threading, itertools
 from concurrent.futures import ThreadPoolExecutor
@@ -103,9 +112,11 @@ def remove_diacritics(text: str) -> str:
 
 # HANDLE MUSIC FILE CLASSES
 class SkipFileException(Exception):
+  ''' Exception to be raised if a file does not require conversion '''
   pass
 
 class MusicArchive:
+  ''' Represents an .ootrs file storing its contents '''
   def __init__(self, tempfolder):
     self.sequence: str = None
     self.meta: str = None
@@ -115,6 +126,7 @@ class MusicArchive:
     self.tempfolder = tempfolder
 
   def unpack(self, filepath: str) -> None:
+    ''' Unpacks the contents of an .ootrs file into the temporary folder '''
     if os.path.exists(self.tempfolder):
       os.rmdir(self.tempfolder)
 
@@ -174,6 +186,7 @@ yaml.add_representer(FlowStyleList, represent_flow_style_list)
 yaml.add_representer(HexInt, represent_hexint)
 
 def write_metadata(folder: str, base_name: str, cosmetic_name: str, instrument_set: str | int, song_type: str, music_groups, zsounds: dict[str, dict[str, int]] = None):
+  ''' Writes the YAML .metadata file '''
   metadata_file_path = f"{folder}/{base_name}.metadata"
 
   yaml_dict : dict = {
@@ -193,6 +206,7 @@ def write_metadata(folder: str, base_name: str, cosmetic_name: str, instrument_s
     yaml.dump(yaml_dict, f, sort_keys=False, allow_unicode=True)
 
 def copy_archive_files(source_dir: str, destination_dir: str) -> None:
+  ''' Copies the contents of the original archive to the folder for the new archive '''
   skip_extensions: list[str] = ['.meta'] # Skip the old metadata file
 
   for file in os.listdir(source_dir):
@@ -204,20 +218,8 @@ def copy_archive_files(source_dir: str, destination_dir: str) -> None:
 
     shutil.copyfile(os.path.join(source_dir, file), os.path.join(destination_dir, file))
 
-# def copy_unprocessed_files(source_dir: str, destination_dir: str) -> None:
-#   skip_extensions: list[str] = ['.seq', '.meta', '.zbank', '.bankmeta', '.zsound']
-
-#   for file in os.listdir(source_dir):
-#     name: str = os.path.basename(file)
-#     extension: str = os.path.splitext(file)[1]
-
-#     if extension.lower() in skip_extensions:
-#       continue
-
-#     shutil.copyfile(os.path.join(source_dir, file), os.path.join(destination_dir, file))
-
 def pack(filename: str, tempfolder: str, destination_dir: str) -> None:
-    '''Packs the temp folder into a new ootrs file'''
+    '''Packs the temp folder into a new .ootrs file'''
     archive_base = os.path.join(destination_dir, filename)
     zip_path = f"{archive_base}.zip"
     mmrs_path = f"{archive_base}.ootrs"
@@ -230,11 +232,23 @@ def pack(filename: str, tempfolder: str, destination_dir: str) -> None:
     os.rename(zip_path, mmrs_path)
 
 def process_meta_file(meta_filepath: str) -> tuple[str, str | int, str, list[str], dict]:
+  ''' Extracts data from the archive's .meta file '''
+
+  # Expected format:
+  # Line 1: cosmetic name
+  # Line 2: instrument set
+  # Line 3: song type
+  # Line 4: music groups (comma-separated list)
+  # Line 5+: meta commands
   with open(meta_filepath, 'r') as f:
     lines = f.readlines()
     lines = [line.rstrip() for line in lines]
 
     cosmetic_name = f"{lines[0]}"
+
+    if lines[1] == "bgm" or lines[1] == "fanfare":
+      raise ValueError(f'process_meta_file Error: Expected instrument set for line 2, but got "{lines[1]}" instead.')
+
     instrument_set = "custom" if lines[1] == '-' else int(lines[1], 16)
 
     if len(lines) < 3:
@@ -243,7 +257,7 @@ def process_meta_file(meta_filepath: str) -> tuple[str, str | int, str, list[str
       song_type = lines[2].lower()
 
     if len(lines) < 4:
-      music_groups = []
+      music_groups = DEFAULT_BGM_CATEGORIES if song_type == "bgm" else DEFAULT_FANFARE_CATEGORIES
     elif len(lines) >= 4:
       music_groups = [category for category in lines[3].split(',')]
 
@@ -269,6 +283,7 @@ def process_meta_file(meta_filepath: str) -> tuple[str, str | int, str, list[str
   return cosmetic_name, instrument_set, song_type, music_groups, zsounds
 
 def convert_archive(input_file: str, destination_dir: str) -> None:
+  ''' Converts an .ootrs file into the YAML metadata .ootrs format '''
   filename = os.path.splitext(os.path.basename(input_file))[0]
   filepath = os.path.abspath(input_file)
 
@@ -297,6 +312,7 @@ def convert_archive(input_file: str, destination_dir: str) -> None:
 
 # Process single file
 def processing_file(input_file: str, base_folder: str, conversion_folder: str) -> None:
+  ''' Processes a single file '''
   try:
     extension = os.path.splitext(input_file)[1]
     relative_path = os.path.relpath(input_file, base_folder)
@@ -313,21 +329,26 @@ def processing_file(input_file: str, base_folder: str, conversion_folder: str) -
 
 # Begin processing files
 def process_with_spinner(input_file: str, base_folder: str, conversion_folder: str, show_file_log: bool = False) -> None:
+  ''' Processes files with the spinner '''
   global spinner_thread
   try:
     processing_file(input_file, base_folder, conversion_folder)
   except Exception as e:
+    # Stop processing and log exceptions
     done_flag.set()
     spinner_thread.join()
     print(f"{RED}Error processing {input_file}:{RESET}")
     print(f"{YELLOW}{str(e)}{RESET}")
     print()
     log_error(f"Error processing {input_file}", exc_info=True)
+    # Restart processing
     spinner_thread = start_spinner("Processing file...")
 
 def process_files(base_folder: str, conversion_folder: str, files: list[str], show_file_log: bool = False):
+  ''' Begins the file process across multiple threads '''
   os.makedirs(conversion_folder, exist_ok=True)
 
+  # Store each file and its relative path
   files_by_dir = defaultdict(list)
   for input_file in files:
     rel_path = os.path.relpath(input_file, base_folder)
@@ -335,6 +356,7 @@ def process_files(base_folder: str, conversion_folder: str, files: list[str], sh
     files_by_dir[dir_path].append((input_file, os.path.basename(rel_path)))
 
   with ThreadPoolExecutor() as executor:
+    # Process files by directory
     for dir_path, file_entries in sorted(files_by_dir.items()):
       if not USE_SPINNER and show_file_log:
         print(f"{CYAN}Processing Directory:{RESET} {os.path.join(os.path.basename(base_folder), dir_path)}")
@@ -345,6 +367,7 @@ def process_files(base_folder: str, conversion_folder: str, files: list[str], sh
         executor.submit(process_with_spinner, input_file, base_folder, conversion_folder, show_file_log)
 
 def convert_music_files() -> None:
+  ''' Main function to process files and convert them from the old format to the new format '''
   global spinner_thread
 
   spinner_thread = start_spinner("Processing files...")
@@ -353,11 +376,13 @@ def convert_music_files() -> None:
     for file in FILES:
       filepath = os.path.abspath(file)
 
+      # If the file is a directory, process the directory and all subdirectories
       if os.path.isdir(file):
         base_folder = filepath
         parent_folder = os.path.dirname(base_folder)
         conversion_folder: str = os.path.join(parent_folder, f'{os.path.basename(base_folder)}_converted')
 
+        # Build the list of files in the directory and each subdirectory
         files_to_process = [
           os.path.join(root, name)
           for root, _, files in os.walk(base_folder)
@@ -369,6 +394,7 @@ def convert_music_files() -> None:
 
         process_files(base_folder, conversion_folder, files_to_process, True)
 
+      # If the file is a single file, process just the single file
       elif os.path.isfile(file):
         base_folder = os.path.dirname(filepath)
         conversion_folder: str = os.path.join(base_folder, 'converted_files')
