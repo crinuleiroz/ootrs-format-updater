@@ -11,6 +11,12 @@ import unicodedata
 from collections import defaultdict
 from typing import Final
 
+try:
+  from utils.Audiobank import *
+  USE_NEW_LINKING = True
+except ImportError:
+  USE_NEW_LINKING = False
+
 FILES = sys.argv[1:]
 
 # ANSI Terminal Color Codes
@@ -297,6 +303,29 @@ def convert_archive(input_file: str, destination_dir: str) -> None:
       meta_name: str = os.path.splitext(os.path.basename(archive.meta))[0]
       meta_filepath: str = os.path.join(original_temp, archive.meta)
       cosmetic_name, instrument_set, song_type, music_groups, zsounds = process_meta_file(meta_filepath)
+
+      if USE_NEW_LINKING:
+        with open(os.path.join(original_temp, archive.bankmeta), 'r') as bmeta:
+          bankmeta_data = bmeta.read()
+
+        with open(os.path.join(original_temp, archive.bank), 'r') as zbank:
+          zbank_data = zbank.read()
+
+        audiobank: Audiobank = Audiobank(bankmeta_data, zbank_data)
+
+        for key, value in list(zsounds.items()):
+          if key and value and "temp address" in value:
+            for sample in audiobank.get_bank_samples():
+              if value['temp address'] == sample.address:
+                zsounds[key] = {
+                  "instrument type": sample.parent_type,
+                  "list index": sample.parent_index
+                }
+
+                if isinstance(sample.parent, Instrument):
+                  zsounds[key]["key region"] = sample.key_region
+
+                break
 
       with tempfile.TemporaryDirectory(prefix='ootrs_convert_2_') as song_folder:
         copy_archive_files(original_temp, song_folder)
