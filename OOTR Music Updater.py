@@ -304,11 +304,11 @@ def convert_archive(input_file: str, destination_dir: str) -> None:
       meta_filepath: str = os.path.join(original_temp, archive.meta)
       cosmetic_name, instrument_set, song_type, music_groups, zsounds = process_meta_file(meta_filepath)
 
-      if USE_NEW_LINKING:
-        with open(os.path.join(original_temp, archive.bankmeta), 'r') as bmeta:
+      if USE_NEW_LINKING and archive.bankmeta and archive.bank:
+        with open(os.path.join(original_temp, archive.bankmeta), 'rb') as bmeta:
           bankmeta_data = bmeta.read()
 
-        with open(os.path.join(original_temp, archive.bank), 'r') as zbank:
+        with open(os.path.join(original_temp, archive.bank), 'rb') as zbank:
           zbank_data = zbank.read()
 
         audiobank: Audiobank = Audiobank(bankmeta_data, zbank_data)
