@@ -147,23 +147,29 @@ class MusicArchive:
       # base_name = os.path.splitext(f)[0]
       extension = os.path.splitext(f)[1].lower()
 
-      if extension == ".seq":
-        self.sequence = f
-        continue
+      match extension:
+        case '.seq':
+          self.sequence = f
+          continue
 
-      if extension == ".bankmeta":
-        self.bankmeta = f
-        continue
+        case '.meta':
+          self.meta = f
+          continue
 
-      if extension == ".zbank":
-        self.bank = f
-        continue
+        case '.bankmeta':
+          self.bankmeta = f
+          continue
 
-      if extension == ".zsound":
-        self.zsounds.append(f)
+        case '.zbank':
+          self.bank = f
+          continue
 
-      if extension == ".meta":
-        self.meta = f
+        case '.zsound':
+          self.zsounds.append(f)
+          continue
+
+        case _:
+          continue
 
     if not self.sequence:
       raise FileNotFoundError(f'MusicArchive Error: No sequence file found!')
